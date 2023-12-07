@@ -1,6 +1,6 @@
 import csv
 from sqlalchemy.exc import IntegrityError
-from models import Movie, MovieGenre
+from models import Movie, MovieGenre, Tag, Link
 
 def check_and_read_data(db):
     # check if we have movies in the database
