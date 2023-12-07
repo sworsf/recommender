@@ -3,7 +3,7 @@
 from flask import Flask, render_template
 from flask_user import login_required, UserManager
 
-from models import db, User, Movie, MovieGenre
+from models import db, User, Movie, MovieGenre, Tag, Link
 from read_data import check_and_read_data
 
 # Class-based application configuration
