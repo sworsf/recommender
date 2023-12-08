@@ -1,6 +1,6 @@
 import csv
 from sqlalchemy.exc import IntegrityError
-from models import Movie, MovieGenre, Tag, Link
+from models import Movie, MovieGenre, MovieLink, MovieTag
 
 def check_and_read_data(db):
     # check if we have movies in the database
@@ -30,7 +30,7 @@ def check_and_read_data(db):
                 if count % 100 == 0:
                     print(count, " movies read")
 
-    if Link.query.count() == 0:
+    if MovieLink.query.count() == 0:
         with open('data/links.csv', newline='', encoding='utf8') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',')
                 count = 0
@@ -40,34 +40,35 @@ def check_and_read_data(db):
                             movie_id = row[0]
                             imdb_id = row[1]
                             tmdb_id = row[2]
-                            link = Link(movie_id=movie_id, imdb_id=imdb_id, tmdb_id=tmdb_id)
+                            link = MovieLink(movie_id=movie_id, imdb_id=imdb_id, tmdb_id=tmdb_id)
                             db.session.add(link)
                             db.session.commit()
                         except IntegrityError:
                             print(f"Ignoring duplicate link for movie ID: {movie_id}")
                             db.session.rollback()
+                            pass
                     count += 1
                     if count % 100 == 0:
                         print(count, " links read")
-    
-    if Tag.query.count() == 0:
-        with open('data/tags.csv', newline='', encoding='utf8') as csvfile:
-            reader = csv.reader(csvfile, delimiter=',')
-            count = 0
-            for row in reader:
-                if count > 0:
-                    try:
-                        user_id = row[0]
-                        movie_id = row[1]
-                        tag = row[2]
-                        timestamp = row[3] 
-                        tag_entry = Tag(user_id=user_id, movie_id=movie_id, tag=tag, timestamp=timestamp)
-                        db.session.add(tag_entry)
-                        db.session.commit()
-                    except IntegrityError:
-                        print(f"Ignoring duplicate tag for movie ID: {movie_id}")
-                        db.session.rollback()
-                count += 1
-                if count % 100 == 0:
-                    print(count, " tags read")
 
+        if MovieTag.query.count() == 0:
+            with open('data/tags.csv', newline='', encoding='utf8') as csvfile:
+                reader = csv.reader(csvfile, delimiter=',')
+                count = 0
+                for row in reader:
+                    if count > 0:
+                        try:
+                            user_id = row[0]
+                            movie_id = row[1]
+                            tag = row[2]
+                            timestamp = row[3] 
+                            tag_entry = MovieTag(user_id=user_id, movie_id=movie_id, tag=tag, timestamp=timestamp)
+                            db.session.add(tag_entry)
+                            db.session.commit()
+                        except IntegrityError:
+                            print(f"Ignoring duplicate tag for movie ID: {movie_id}")
+                            db.session.rollback()
+                            pass
+                    count += 1
+                    if count % 100 == 0:
+                        print(count, " tags read")
