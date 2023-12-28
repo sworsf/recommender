@@ -1,5 +1,6 @@
 import csv
 from sqlalchemy.exc import IntegrityError
+import pandas as pd
 from models import Movie, MovieGenre, MovieLink, MovieTag, Rating, User
 
 def check_and_read_data(db):
@@ -73,26 +74,39 @@ def check_and_read_data(db):
                     if count % 100 == 0:
                         print(count, " tags read")
 
+    # Specify the fraction of the data we want to include in the smaller file version
+    sample_fraction = 0.05  # Adjust as needed
+
+    # Read the original CSV file using pandas
+    original_data = pd.read_csv('data/ratings.csv')
+
+    # Sample a fraction of the data
+    smaller_data = original_data.sample(frac=sample_fraction, random_state=42)
+
+    # Write the smaller data to a new CSV file ratings_small.csv
+    smaller_data.to_csv('data/ratings_small.csv', index=False)
+
     if Rating.query.count() == 0:
-        # read movies from csv
-        with open('data/ratings.csv', newline='', encoding='utf8') as csvfile:
+
+        # read ratings from csv
+        with open('data/ratings_small.csv', newline='', encoding='utf8') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             count = 0
             for row in reader:
                 if count > 0:
                     try:
-                        id = row[0]
-                        user_id = row[1]
+                        user_id = row[0]
+                        #create user objects/db entires for the users found in the rating file
                         user = User(id=user_id, active=1)
                         db.session.add(user)
-                        movie_id = row[2]
-                        rating_score = row[3]
-                        timestamp = row[4]
-                        rating = Rating(id=id,user_id=user_id, movie_id=movie_id,rating=rating_score,timestamp=timestamp )
+                        movie_id = row[1]
+                        rating_score = row[2]
+                        timestamp = row[3]
+                        rating = Rating(user_id=user_id, movie_id=movie_id,rating=rating_score,timestamp=timestamp )
                         db.session.add(rating)
                         db.session.commit()  # save data to database
                     except IntegrityError:
-                        print("Ignoring duplicate rating: " + rating.id)
+                        #print("Rating Object:", rating.__dict__)
                         db.session.rollback()
                         pass
                 count += 1
