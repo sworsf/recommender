@@ -24,15 +24,51 @@
                     {% endfor %}
                 </p>
             </div>
-            <div class="panel-footer">Rate:
-                <a href="#" class="card-link">1</a>
-                <a href="#" class="card-link">2</a>
-                <a href="#" class="card-link">3</a>
-                <a href="#" class="card-link">4</a>
-                <a href="#" class="card-link">5</a> Stars
+            <div class="panel-footer movie-rating">Rate:
+                <a href="#" class="card-link" data-movieid="m.id">1</a>
+                <a href="#" class="card-link" data-movieid="m.id">2</a>
+                <a href="#" class="card-link" data-movieid="m.id">3</a>
+                <a href="#" class="card-link" data-movieid="m.id">4</a>
+                <a href="#" class="card-link" data-movieid="m.id">5</a> Stars
             </div>
         </div>
     {% endfor %}
 </div>
 
+<script>
+    // Function to handle the click event on any rating link
+    function rateMovie(event) {
+        event.preventDefault(); // Prevent the default anchor action
+
+        var movieid = this.getAttribute('data-movieid');
+        var rating = this.textContent;
+        var elem = this;
+
+        // Create an AJAX request
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/rate', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+        // Handle the response
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                // Replace the entire div with the response
+                elem.parentElement.innerHTML = xhr.responseText;
+            } else {
+                alert('Request failed. Returned status of ' + xhr.status);
+            }
+        };
+
+        // Send the request with the movie ID and the rating
+        xhr.send('movieid=' + movieid + '&rating=' + rating);
+    }
+
+    // Attach the event listener to each rating link
+    var links = document.querySelectorAll('.movie-rating .card-link');
+    for (var i = 0; i < links.length; i++) {
+        links[i].addEventListener('click', rateMovie);
+    }
+</script>
+
 {% endblock %}
+

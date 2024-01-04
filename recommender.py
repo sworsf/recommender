@@ -1,9 +1,9 @@
 # Contains parts from: https://flask-user.readthedocs.io/en/latest/quickstart_app.html
 
-from flask import Flask, render_template
-from flask_user import login_required, UserManager
+from flask import Flask, render_template, request
+from flask_user import login_required, UserManager, current_user
 
-from models import db, User, Movie, MovieGenre, Tag, Link
+from models import db, User, Movie, MovieGenre, MovieTag, MovieLink
 from read_data import check_and_read_data
 
 # Class-based application configuration
@@ -22,6 +22,12 @@ class ConfigClass(object):
     USER_ENABLE_EMAIL = False  # Disable email authentication
     USER_ENABLE_USERNAME = True  # Enable username authentication
     USER_REQUIRE_RETYPE_PASSWORD = True  # Simplify register form
+
+    # make sure we redirect to home view, not /
+    # (otherwise paths for registering, login and logout will not work on the server)
+    USER_AFTER_LOGIN_ENDPOINT = 'home_page'
+    USER_AFTER_LOGOUT_ENDPOINT = 'home_page'
+    USER_AFTER_REGISTER_ENDPOINT = 'home_page'
 
 # Create Flask app
 app = Flask(__name__)
@@ -66,6 +72,14 @@ def movies_page():
 
     return render_template("movies.html", movies=movies)
 
+@app.route('/rate', methods=['POST'])
+@login_required  # User must be authenticated
+def rate():
+    movieid = request.form.get('movieid')
+    rating = request.form.get('rating')
+    userid = current_user.id
+    print("Rate {} for {} by {}".format(rating, movieid, userid))
+    return render_template("rated.html", rating=rating)
 
 # Start development web server
 if __name__ == '__main__':
