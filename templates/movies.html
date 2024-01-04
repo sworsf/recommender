@@ -25,14 +25,18 @@
                 </p>
             </div>
             <div class="panel-footer movie-rating">Rate:
-                <a href="#" class="card-link" data-movieid="m.id">1</a>
-                <a href="#" class="card-link" data-movieid="m.id">2</a>
-                <a href="#" class="card-link" data-movieid="m.id">3</a>
-                <a href="#" class="card-link" data-movieid="m.id">4</a>
-                <a href="#" class="card-link" data-movieid="m.id">5</a> Stars
+                <a href="#" class="card-link" data-movieid={{m.id}}>1</a>
+                <a href="#" class="card-link" data-movieid={{m.id}}>2</a>
+                <a href="#" class="card-link" data-movieid={{m.id}}>3</a>
+                <a href="#" class="card-link" data-movieid={{m.id}}>4</a>
+                <a href="#" class="card-link" data-movieid={{m.id}}>5</a> Stars
             </div>
         </div>
     {% endfor %}
+
+    <form action={{url_for("movies_page")}} method='GET'>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
 </div>
 
 <script>

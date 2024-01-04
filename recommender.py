@@ -78,6 +78,9 @@ def rate():
     movieid = request.form.get('movieid')
     rating = request.form.get('rating')
     userid = current_user.id
+    # timestamp = 
+    # if no entry for userid and movieid
+    #      save new rating
     print("Rate {} for {} by {}".format(rating, movieid, userid))
     return render_template("rated.html", rating=rating)
 
