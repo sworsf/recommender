@@ -2,8 +2,9 @@
 
 from flask import Flask, render_template, request
 from flask_user import login_required, UserManager, current_user
+from datetime import datetime
 
-from models import db, User, Movie, MovieGenre, MovieTag, MovieLink
+from models import db, User, Movie, MovieGenre, MovieTag, MovieLink, Rating
 from read_data import check_and_read_data
 
 # Class-based application configuration
@@ -75,14 +76,21 @@ def movies_page():
 @app.route('/rate', methods=['POST'])
 @login_required  # User must be authenticated
 def rate():
-    movieid = request.form.get('movieid')
-    rating = request.form.get('rating')
-    userid = current_user.id
-    # timestamp = 
-    # if no entry for userid and movieid
-    #      save new rating
-    print("Rate {} for {} by {}".format(rating, movieid, userid))
-    return render_template("rated.html", rating=rating)
+    movie_id = request.form.get('movieid')
+    rating_score = request.form.get('rating_score')
+    user_id = current_user.id
+    timestamp = f'{datetime.now():%d-%m-%Y %H:%M:%S%z}'
+    print(timestamp)
+
+    # if the db does not contain a rating for movie from that user, save rating
+    if Rating.query.filter(Rating.user_id == user_id).filter(Rating.movie_id == movie_id).count() == 0:
+        rating = Rating(user_id=user_id, movie_id=movie_id,rating=rating_score,timestamp=timestamp)
+        db.session.add(rating)
+        db.session.commit()  # save data to database
+        print("Rate {} for {} by {}".format(rating_score, movie_id, user_id))
+    else:
+        print(f"movie {movie_id} already rated by {user_id}")
+    return render_template("rated.html", rating_score=rating_score)
 
 # Start development web server
 if __name__ == '__main__':

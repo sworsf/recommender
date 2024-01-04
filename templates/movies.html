@@ -45,7 +45,7 @@
         event.preventDefault(); // Prevent the default anchor action
 
         var movieid = this.getAttribute('data-movieid');
-        var rating = this.textContent;
+        var rating_score = this.textContent;
         var elem = this;
 
         // Create an AJAX request
@@ -64,7 +64,7 @@
         };
 
         // Send the request with the movie ID and the rating
-        xhr.send('movieid=' + movieid + '&rating=' + rating);
+        xhr.send('movieid=' + movieid + '&rating_score=' + rating_score);
     }
 
     // Attach the event listener to each rating link
