@@ -60,8 +60,16 @@ def movies_page():
     # String-based templates
 
     # first 10 movies
-    movies = Movie.query.limit(10).all()
+    # movies = Movie.query.limit(10).all()
 
+    # get all ratings done by the current user 
+    # then only display movies that have not been rated by current user
+    c_user_ratings = Rating.query.filter_by(user_id = current_user.id).subquery()
+    rated_movies = Movie.query.join(c_user_ratings, Movie.id == c_user_ratings.c.movie_id)
+    unrated_movies = Movie.query.except_(rated_movies).limit(10).all()
+
+    #movies = Movie.query.filter(Movie.genres.any(MovieGenre.genre == 'Romance')).limit(10).all()
+    
     # only Romance movies
     # movies = Movie.query.filter(Movie.genres.any(MovieGenre.genre == 'Romance')).limit(10).all()
 
@@ -71,7 +79,7 @@ def movies_page():
     #     .filter(Movie.genres.any(MovieGenre.genre == 'Horror')) \
     #     .limit(10).all()
 
-    return render_template("movies.html", movies=movies)
+    return render_template("movies.html", movies=unrated_movies)
 
 @app.route('/rate', methods=['POST'])
 @login_required  # User must be authenticated
