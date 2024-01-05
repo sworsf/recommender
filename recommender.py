@@ -57,16 +57,27 @@ def home_page():
 @app.route('/movies')
 @login_required  # User must be authenticated
 def movies_page():
+
     # String-based templates
 
     # first 10 movies
     # movies = Movie.query.limit(10).all()
 
     # get all ratings done by the current user 
-    # then only display movies that have not been rated by current user
+    # then only get movies that have not been rated by current user
     c_user_ratings = Rating.query.filter_by(user_id = current_user.id).subquery()
     rated_movies = Movie.query.join(c_user_ratings, Movie.id == c_user_ratings.c.movie_id)
     unrated_movies = Movie.query.except_(rated_movies).limit(10).all()
+
+    genres = set()
+    for movie_genre in MovieGenre.query.all():
+        genres.add(movie_genre.genre)
+
+    # display cold start page is user has not done any ratings
+    if rated_movies.count() == 0:
+        return render_template("cold_start.html", genres=genres)
+    else:
+        return render_template("movies.html", movies=unrated_movies)
 
     #movies = Movie.query.filter(Movie.genres.any(MovieGenre.genre == 'Romance')).limit(10).all()
     
@@ -79,7 +90,7 @@ def movies_page():
     #     .filter(Movie.genres.any(MovieGenre.genre == 'Horror')) \
     #     .limit(10).all()
 
-    return render_template("movies.html", movies=unrated_movies)
+    #return render_template("movies.html", movies=unrated_movies)
 
 @app.route('/rate', methods=['POST'])
 @login_required  # User must be authenticated
@@ -98,7 +109,30 @@ def rate():
         print("Rate {} for {} by {}".format(rating_score, movie_id, user_id))
     else:
         print(f"movie {movie_id} already rated by {user_id}")
+
     return render_template("rated.html", rating_score=rating_score)
+
+@app.route('/fav_genre', methods=['POST'])
+@login_required  # User must be authenticated
+def fav_genre():
+    genre1 = request.form.get('genre1')
+    genre2 = request.form.get('genre2')
+    genre3 = request.form.get('genre3')
+    user_id = current_user.id
+
+    print("received genres ", [genre1, genre2, genre3], " for user ", user_id)
+
+    # save genres for for the user in database
+    #db.session.add()
+    #db.session.commit()
+
+    # filter movies by genres
+    movies1 = Movie.query.filter(Movie.genres.any(MovieGenre.genre == genre1))
+    movies2 = Movie.query.filter(Movie.genres.any(MovieGenre.genre == genre2))
+    movies3 = Movie.query.filter(Movie.genres.any(MovieGenre.genre == genre3))
+    movies = movies1.union(movies2).union(movies3).limit(10).all()
+
+    return render_template("genre_movies.html", movies=movies)
 
 # Start development web server
 if __name__ == '__main__':

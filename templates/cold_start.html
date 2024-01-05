@@ -1,0 +1,95 @@
+{% extends "flask_user_layout.html" %}
+{% block content %}
+<div class="container">
+    <h2>Movies</h2>
+
+    <div id="genre-selector">
+        Before you can start rating movies, please choose your 3 favourite genres:
+
+        <div class="genre-checklist">
+            {% for g in genres %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="{{ g }}" name="genrecheckbox" id="flexCheckDefault">
+                <label class="form-check-label" for="flexCheckDefault">
+                    {{ g }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary"  id="submit-btn" disabled>Submit</button>
+    </div>
+    
+</div>
+
+
+<script>
+
+    function checkbox(event) {
+        // get submit button
+        var btn = document.getElementById("submit-btn");
+        // get all checked boxes
+        var checkedBoxes = document.querySelectorAll('input[name=genrecheckbox]:checked');
+        // when 3 boxes checked enable submit button
+        if (checkedBoxes.length == 3) {
+            btn.disabled = "";
+        } else {
+            btn.disabled = "disabled";
+        }
+    }
+
+    // Attach the event listener to each checkbox
+    var checkBoxes = document.querySelectorAll('input[name=genrecheckbox]');
+    for (var i = 0; i < checkBoxes.length; i++) {
+        checkBoxes[i].addEventListener('click', checkbox);
+    }
+
+    function submit_genres(event) {
+
+        // get submit button
+        var btn = document.getElementById("submit-btn");
+        if (btn.disabled == "") {
+
+            // get all checked boxes
+            var checkedBoxes = document.querySelectorAll('input[name=genrecheckbox]:checked');
+            // get the genres
+            var genres = [];
+            for (var i = 0; i < 3; i++) {
+                genres[i] = checkedBoxes[i].getAttribute("value");
+            }
+
+            // Create an AJAX request
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/fav_genre', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+            // Handle the response
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    // Replace the entire div with the response
+                    document.getElementById("genre-selector").innerHTML = xhr.responseText;
+                    // document.getElementById("genre-selector").innerHTML = xhr.responseText;
+                    console.log(xhr.responseText);
+                } else {
+                    alert('Request failed. Returned status of ' + xhr.status);
+                }
+            };
+
+            // Send the request with the genres
+            xhr.send('genre1=' + genres[0] + '&genre2=' + genres[1] +'&genre3=' + genres[2]);
+
+        } else {
+            console.log("button disabled");
+        }
+
+    }
+
+    // Attach the event listener to submit button
+    document.getElementById("submit-btn").addEventListener('click', submit_genres);
+
+
+
+</script>
+
+
+
+{% endblock %}
