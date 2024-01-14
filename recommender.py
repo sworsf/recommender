@@ -4,7 +4,7 @@ from flask import Flask, render_template, request
 from flask_user import login_required, UserManager, current_user
 from datetime import datetime
 
-from models import db, User, Movie, MovieGenre, MovieTag, MovieLink, Rating
+from models import db, User, Movie, MovieGenre, MovieTag, MovieLink, Rating, GenreScore
 from read_data import check_and_read_data
 
 # Class-based application configuration
@@ -56,47 +56,44 @@ def home_page():
 # The Members page is only accessible to authenticated users via the @login_required decorator
 @app.route('/movies')
 @login_required  # User must be authenticated
-def movies_page():
+def movies_page():  
 
-    # String-based templates
+    # get the genre scores of current User
+    c_user_genre_scores = GenreScore.query.filter_by(user_id = current_user.id).all()
 
-    # first 10 movies
-    # movies = Movie.query.limit(10).all()
+    # display cold start page if user does not have any genre preferences
+    # if rated_movies.count() == 0:
+    if len(c_user_genre_scores) == 0:
+        # get the genres that can be chosen
+        all_genres = set()
+        for movie_genre in MovieGenre.query.all():
+            all_genres.add(movie_genre.genre)
+        return render_template("cold_start.html", genres=all_genres)
+    
+
+    # get the genre scores of user, sort them by score and get three favorite genres
+    best_genres = GenreScore.query.filter_by(user_id = current_user.id).order_by(GenreScore.score).limit(3).all()
+    print(f"the 3 favorite genres are {best_genres[0].genre}, {best_genres[1].genre}, and {best_genres[2].genre}")
 
     # get all ratings done by the current user 
     # then only get movies that have not been rated by current user
     c_user_ratings = Rating.query.filter_by(user_id = current_user.id).subquery()
     rated_movies = Movie.query.join(c_user_ratings, Movie.id == c_user_ratings.c.movie_id)
-    unrated_movies = Movie.query.except_(rated_movies).limit(10).all()
+    unrated_movies = Movie.query.except_(rated_movies)
 
-    genres = set()
-    for movie_genre in MovieGenre.query.all():
-        genres.add(movie_genre.genre)
+    # filter unrated movies by 3 favorite genres
+    movies1 = unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[0].genre))
+    movies2 = unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[1].genre))
+    movies3 = unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[2].genre))
+    genre_movie_selection = movies1.union(movies2).union(movies3).limit(10).all()
 
-    # display cold start page is user has not done any ratings
-    if rated_movies.count() == 0:
-        return render_template("cold_start.html", genres=genres)
-    else:
-        return render_template("movies.html", movies=unrated_movies)
-
-    #movies = Movie.query.filter(Movie.genres.any(MovieGenre.genre == 'Romance')).limit(10).all()
-    
-    # only Romance movies
-    # movies = Movie.query.filter(Movie.genres.any(MovieGenre.genre == 'Romance')).limit(10).all()
-
-    # only Romance AND Horror movies
-    # movies = Movie.query\
-    #     .filter(Movie.genres.any(MovieGenre.genre == 'Romance')) \
-    #     .filter(Movie.genres.any(MovieGenre.genre == 'Horror')) \
-    #     .limit(10).all()
-
-    #return render_template("movies.html", movies=unrated_movies)
+    return render_template("movies.html", movies=genre_movie_selection)
 
 @app.route('/rate', methods=['POST'])
 @login_required  # User must be authenticated
 def rate():
     movie_id = request.form.get('movieid')
-    rating_score = request.form.get('rating_score')
+    rating_score = int(request.form.get('rating_score'))
     user_id = current_user.id
     timestamp = f'{datetime.now():%d-%m-%Y %H:%M:%S%z}'
     print(timestamp)
@@ -110,29 +107,48 @@ def rate():
     else:
         print(f"movie {movie_id} already rated by {user_id}")
 
+    # change the score of the genres dependent on the rating
+    # e.g. add -2 to if rating = 1, add +2 if rating = 5
+    movie_genres = Movie.query.filter(Movie.id == movie_id).first().genres
+    for movie_genre in movie_genres:
+        genre = movie_genre.genre
+        genre_score = GenreScore.query.filter_by(user_id = user_id).filter_by(genre=genre).first()
+        if genre_score == None:
+            # if there is no score safed for the genre and the user, create a new one
+            db.session.add(GenreScore(user_id=user_id, genre=genre, score=(rating_score - 3)))
+            db.session.commit()
+            print(f"Score {GenreScore.query.filter_by(user_id = current_user.id).filter_by(genre=genre).first().score} for {genre} has been created")
+        else:
+            # change the score dependent on the rating
+            print(f"Score for {genre} is {genre_score.score}")
+            genre_score.score = genre_score.score + (rating_score - 3)
+            db.session.commit()
+            print(f"Score for {genre} has been changed to {GenreScore.query.filter_by(user_id = current_user.id).filter_by(genre=genre).first().score}")
+
+
     return render_template("rated.html", rating_score=rating_score)
 
 @app.route('/fav_genre', methods=['POST'])
 @login_required  # User must be authenticated
 def fav_genre():
+
+    SCORE_FOR_CHOSEN_GENRE = 10
+
+    # get the genres chosen by user
     genre1 = request.form.get('genre1')
     genre2 = request.form.get('genre2')
     genre3 = request.form.get('genre3')
     user_id = current_user.id
-
     print("received genres ", [genre1, genre2, genre3], " for user ", user_id)
+    genres = [genre1, genre2, genre3]
 
-    # save genres for for the user in database
-    #db.session.add()
-    #db.session.commit()
+    # adds a score for the each genre and the user
+    db.session.add(GenreScore(user_id=user_id, genre=genre1, score=SCORE_FOR_CHOSEN_GENRE))
+    db.session.add(GenreScore(user_id=user_id, genre=genre2, score=SCORE_FOR_CHOSEN_GENRE))
+    db.session.add(GenreScore(user_id=user_id, genre=genre3, score=SCORE_FOR_CHOSEN_GENRE))
+    db.session.commit()
 
-    # filter movies by genres
-    movies1 = Movie.query.filter(Movie.genres.any(MovieGenre.genre == genre1))
-    movies2 = Movie.query.filter(Movie.genres.any(MovieGenre.genre == genre2))
-    movies3 = Movie.query.filter(Movie.genres.any(MovieGenre.genre == genre3))
-    movies = movies1.union(movies2).union(movies3).limit(10).all()
-
-    return render_template("genre_movies.html", movies=movies)
+    return render_template("genre_info.html", genres=genres)
 
 # Start development web server
 if __name__ == '__main__':

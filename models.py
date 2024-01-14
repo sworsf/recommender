@@ -63,3 +63,10 @@ class Rating(db.Model):
     movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), nullable=False)
     rating = db.Column(db.Integer)
     timestamp = db.Column(db.Integer)
+
+class GenreScore(db.Model):
+    __tablename__ = 'genre_scores'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    genre = db.Column(db.String(255), nullable=False, server_default='')
+    score = db.Column(db.Integer)

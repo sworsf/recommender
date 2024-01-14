@@ -24,6 +24,7 @@
 
 <script>
 
+    // when a checkbox is clicked, check if submit button should be enabled or disabled
     function checkbox(event) {
         // get submit button
         var btn = document.getElementById("submit-btn");
@@ -36,22 +37,23 @@
             btn.disabled = "disabled";
         }
     }
-
     // Attach the event listener to each checkbox
     var checkBoxes = document.querySelectorAll('input[name=genrecheckbox]');
     for (var i = 0; i < checkBoxes.length; i++) {
         checkBoxes[i].addEventListener('click', checkbox);
     }
 
+
+
+    // when submit button is cklicked, collect the three genres and send post request
     function submit_genres(event) {
 
         // get submit button
         var btn = document.getElementById("submit-btn");
         if (btn.disabled == "") {
-
             // get all checked boxes
             var checkedBoxes = document.querySelectorAll('input[name=genrecheckbox]:checked');
-            // get the genres
+            // get the genres of the checkboxes
             var genres = [];
             for (var i = 0; i < 3; i++) {
                 genres[i] = checkedBoxes[i].getAttribute("value");
@@ -74,7 +76,7 @@
                 }
             };
 
-            // Send the request with the genres
+            // Send the request with the information of the chosen genres
             xhr.send('genre1=' + genres[0] + '&genre2=' + genres[1] +'&genre3=' + genres[2]);
 
         } else {
@@ -82,7 +84,6 @@
         }
 
     }
-
     // Attach the event listener to submit button
     document.getElementById("submit-btn").addEventListener('click', submit_genres);
 
