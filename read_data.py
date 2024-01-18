@@ -1,7 +1,20 @@
 import csv
 from sqlalchemy.exc import IntegrityError
 import pandas as pd
+import random, string
+import warnings
 from models import Movie, MovieGenre, MovieLink, MovieTag, Rating, User, GenreScore
+
+
+def fill_rating_matrix(df):
+    warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
+    # go through each rating
+    for rating in Rating.query.all():
+        # add the rating for the particular movie and user in the dataframe matrix 
+        df.loc[str(rating.user_id),str(rating.movie_id)] = rating.rating - 3 # (-3 for "mean centering")
+
+    return df
+
 
 def check_and_read_data(db):
     # check if we have movies in the database
@@ -86,6 +99,12 @@ def check_and_read_data(db):
     # Write the smaller data to a new CSV file ratings_small.csv
     smaller_data.to_csv('data/ratings_small.csv', index=False)
 
+    def random_string(length):
+        # from https://stackoverflow.com/questions/2030053/how-to-generate-random-strings-in-python
+        letters = string.ascii_lowercase
+        return ''.join(random.choice(letters) for i in range(length))
+
+
     if Rating.query.count() == 0:
 
         # read ratings from csv
@@ -96,8 +115,10 @@ def check_and_read_data(db):
                 if count > 0:
                     try:
                         user_id = row[0]
+                        password = random_string(255)
+                        username = random_string(100)
                         #create user objects/db entires for the users found in the rating file
-                        user = User(id=user_id, active=1)
+                        user = User(id=user_id, username=username ,password=password, active=0)
                         db.session.add(user)
                         movie_id = row[1]
                         rating_score = row[2]
