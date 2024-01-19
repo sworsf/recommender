@@ -2,19 +2,7 @@ import csv
 from sqlalchemy.exc import IntegrityError
 import pandas as pd
 import random, string
-import warnings
 from models import Movie, MovieGenre, MovieLink, MovieTag, Rating, User, GenreScore
-
-
-def fill_rating_matrix(df):
-    warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
-    # go through each rating
-    for rating in Rating.query.all():
-        # add the rating for the particular movie and user in the dataframe matrix 
-        df.loc[str(rating.user_id),str(rating.movie_id)] = rating.rating - 3 # (-3 for "mean centering")
-
-    return df
-
 
 def check_and_read_data(db):
     # check if we have movies in the database
@@ -115,10 +103,10 @@ def check_and_read_data(db):
                 if count > 0:
                     try:
                         user_id = row[0]
-                        password = random_string(255)
+                        password = random_string(252)+'!1A'
                         username = random_string(100)
                         #create user objects/db entires for the users found in the rating file
-                        user = User(id=user_id, username=username ,password=password, active=0)
+                        user = User(id=user_id, password=password, username=username, active=1)
                         db.session.add(user)
                         movie_id = row[1]
                         rating_score = row[2]
