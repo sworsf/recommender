@@ -1,19 +1,21 @@
 {% extends "flask_user_layout.html" %}
-
 {% block content %}
     <h2>Profile Page</h2>
-    <p>User: {{ current_user.username }}</p>
+    <p>Welcome, {{ current_user.username }}!</p>
 
-    {% if favorite_genres %}
-        <p>Favorite Genres:</p>
-        <ul>
-            {% for genre in favorite_genres %}
-                <li>{{ genre }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No favorite genres found.</p>
-    {% endif %}
+    <h3>Rated Movies:</h3>
+    <ul>
+        {% for movie in rated_movies %}
+            <li>{{ movie.title }} - Rating: {{ movie.rating }}</li>
+        {% endfor %}
+    </ul>
 
-    <p><a href={{ url_for('movies_page') }}>Movies</a> (login required)</p>
+    <h3>Favorite Genres:</h3>
+    <ul>
+        {% for genre in favorite_genres %}
+            <li>{{ genre.genre }} - Score: {{ genre.score }}</li>
+        {% endfor %}
+    </ul>
+
+
 {% endblock %}

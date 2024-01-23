@@ -244,15 +244,15 @@ def fav_genre():
 @app.route('/profile')
 @login_required
 def profile_page():
-    # Get the genre scores of the current user
-    c_user_genre_scores = GenreScore.query.filter_by(user_id=current_user.id).all()
+    # Get the rated movies for the current user
+    c_user_ratings = Rating.query.filter_by(user_id=current_user.id).subquery()
+    rated_movies = Movie.query.join(c_user_ratings, Movie.id == c_user_ratings.c.movie_id).all()
+    print("rated_movies: ",rated_movies)
 
-    # Get the user's favorite genres
-    favorite_genres = [genre_score.genre for genre_score in c_user_genre_scores]
+    # Get the favorite genres for the current user
+    favorite_genres = GenreScore.query.filter_by(user_id=current_user.id).order_by(GenreScore.score.desc()).limit(3).all()
 
-    return render_template('profile.html', favorite_genres=favorite_genres)
-
-
+    return render_template('profile.html', rated_movies=rated_movies, favorite_genres=favorite_genres)
 
 
 # Start development web server
