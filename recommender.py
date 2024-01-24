@@ -7,12 +7,10 @@ import pandas as pd
 import numpy as np
 import warnings
 from sklearn.metrics import mean_squared_error
-import time
-from flask import render_template
-from collections import OrderedDict
-
 from models import db, User, Movie, MovieGenre, MovieTag, MovieLink, Rating, GenreScore
 from read_data import check_and_read_data
+from pprint import pprint
+
 
 # Class-based application configuration
 class ConfigClass(object):
@@ -242,13 +240,22 @@ def fav_genre():
 
 
 
+# Import other necessary modules
+
 @app.route('/profile')
 @login_required
 def profile_page():
     # Get the rated movies for the current user
-    c_user_ratings = Rating.query.filter_by(user_id=current_user.id).subquery()
-    rated_movies = Movie.query.join(c_user_ratings, Movie.id == c_user_ratings.c.movie_id).all()
-    print("rated_movies: ",rated_movies)
+    user_ratings = Rating.query.filter_by(user_id=current_user.id).all()
+    user_rated_movies = [rating.movie for rating in user_ratings]
+    rated_movies = []
+
+    # Printing the list using loop
+    for movie, rating in zip(user_rated_movies, user_ratings):
+        # Access the rating attribute from the relationship
+        print(f"Movie: {movie.title}, Rating: {rating.rating}")
+        rated_movies.append({'title': movie.title, 'rating': rating.rating})
+
 
     # Get the favorite genres for the current user
     favorite_genres = GenreScore.query.filter_by(user_id=current_user.id).order_by(GenreScore.score.desc()).limit(3).all()

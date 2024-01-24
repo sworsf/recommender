@@ -22,4 +22,11 @@ h2 {
     cursor: pointer;
 }
 
+.stylish-title {
+    font-family: 'Arial', sans-serif;
+    color: #3498db;
+    font-size: 24px;
+    font-weight: bold;
+}
+
 /* Add more styles as needed */

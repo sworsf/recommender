@@ -1,15 +1,17 @@
 {% extends "flask_user_layout.html" %}
 {% block content %}
-<div class="container">
+<div class="container mt-4">
     <h2>Movies</h2>
 
     {% for m in movies %}
-        <div class="panel panel-default">
-            <div class="panel-heading"><b>{{ m.title }}</b></div>
-            <div class="panel-body">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="card-title mb-0"><b>{{ m.title }}</b></h4>
+            </div>
+            <div class="card-body">
                 <p>
                     {% for g in m.genres %}
-                        <span class="label label-default">{{ g.genre }}</span>
+                        <span class="badge badge-secondary">{{ g.genre }}</span>
                     {% endfor %}
                 </p>
                 <p>
@@ -20,16 +22,18 @@
                 </p>
                 <p>
                     {% for tag in m.tags %}
-                        <span class="label label-info">{{ tag.tag }}</span>
+                        <span class="badge badge-info">{{ tag.tag }}</span>
                     {% endfor %}
                 </p>
             </div>
-            <div class="panel-footer movie-rating">Rate:
-                <a href="#" class="card-link" data-movieid={{m.id}}>1</a>
-                <a href="#" class="card-link" data-movieid={{m.id}}>2</a>
-                <a href="#" class="card-link" data-movieid={{m.id}}>3</a>
-                <a href="#" class="card-link" data-movieid={{m.id}}>4</a>
-                <a href="#" class="card-link" data-movieid={{m.id}}>5</a> Stars
+            <div class="card-footer">
+                <div class="movie-rating">Rate:
+                    <a href="#" class="card-link" data-movieid={{m.id}}>1</a>
+                    <a href="#" class="card-link" data-movieid={{m.id}}>2</a>
+                    <a href="#" class="card-link" data-movieid={{m.id}}>3</a>
+                    <a href="#" class="card-link" data-movieid={{m.id}}>4</a>
+                    <a href="#" class="card-link" data-movieid={{m.id}}>5</a> Stars
+                </div>
             </div>
         </div>
     {% endfor %}
@@ -75,4 +79,3 @@
 </script>
 
 {% endblock %}
-
