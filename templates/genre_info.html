@@ -1,0 +1,8 @@
+<div>
+    <div class="mb-3">
+        We have saved your preferation for {{ genres[0] }}, {{ genres[1] }}, and {{ genres[2] }} movies. You can start rating movies now, have fun!
+    </div>
+    <form action={{url_for("movies_page")}} method='GET'>
+        <button type="submit" class="btn btn-primary">Start rating movies</button>
+    </form>
+</div>

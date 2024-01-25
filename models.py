@@ -9,6 +9,7 @@ class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     active = db.Column('is_active', db.Boolean(), nullable=False, server_default='1')
+    ratings = db.relationship('Rating', backref='user', lazy=True)
 
     # User authentication information. The collation='NOCASE' is required
     # to search case insensitively when USER_IFIND_MODE is 'nocase_collation'.
@@ -28,6 +29,7 @@ class Movie(db.Model):
     genres = db.relationship('MovieGenre', backref='movie', lazy=True)
     links = db.relationship('MovieLink', backref='movie', lazy=True)
     tags = db.relationship('MovieTag', backref='movie', lazy=True)
+    ratings = db.relationship('Rating', backref='movie', lazy=True)
 
 
 class MovieGenre(db.Model):
@@ -61,3 +63,10 @@ class Rating(db.Model):
     movie_id = db.Column(db.Integer, db.ForeignKey('movies.id'), nullable=False)
     rating = db.Column(db.Integer)
     timestamp = db.Column(db.Integer)
+
+class GenreScore(db.Model):
+    __tablename__ = 'genre_scores'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    genre = db.Column(db.String(255), nullable=False, server_default='')
+    score = db.Column(db.Integer)

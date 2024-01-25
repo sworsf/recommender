@@ -1,4 +1,9 @@
-flask
+flask==2.2.2
 flask-sqlalchemy
 flask-user==1.0.2.2
+Werkzeug==2.2.2
+scikit-learn
+numpy
+pandas
+datetime
 
