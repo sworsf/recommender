@@ -4,7 +4,7 @@ import pandas as pd
 import random, string
 from models import Movie, MovieGenre, MovieLink, MovieTag, Rating, User, GenreScore
 
-def check_and_read_data(db):
+def check_and_read_data(db , fewer_ratings = True):
     # check if we have movies in the database
     # read data if database is empty
     if Movie.query.count() == 0:
@@ -76,7 +76,7 @@ def check_and_read_data(db):
                         print(count, " tags read")
 
     # Specify the fraction of the data we want to include in the smaller file version
-    sample_fraction = 0.05  # Adjust as needed
+    sample_fraction = 0.25  # Adjust as needed
 
     # Read the original CSV file using pandas
     original_data = pd.read_csv('data/ratings.csv')
@@ -87,16 +87,20 @@ def check_and_read_data(db):
     # Write the smaller data to a new CSV file ratings_small.csv
     smaller_data.to_csv('data/ratings_small.csv', index=False)
 
+    # to generate passwords
     def random_string(length):
         # from https://stackoverflow.com/questions/2030053/how-to-generate-random-strings-in-python
         letters = string.ascii_lowercase
         return ''.join(random.choice(letters) for i in range(length))
 
+    csv_ratings_name = 'data/ratings.csv'
+    if fewer_ratings:
+        csv_ratings_name = 'data/ratings_small.csv'
 
     if Rating.query.count() == 0:
 
         # read ratings from csv
-        with open('data/ratings_small.csv', newline='', encoding='utf8') as csvfile:
+        with open(csv_ratings_name, newline='', encoding='utf8') as csvfile:
             reader = csv.reader(csvfile, delimiter=',')
             count = 0
             for row in reader:
@@ -119,5 +123,5 @@ def check_and_read_data(db):
                         db.session.rollback()
                         pass
                 count += 1
-                if count % 100 == 0:
+                if count % 1000 == 0:
                     print(count, " ratings read")

@@ -1,42 +1,100 @@
 {% extends "flask_user_layout.html" %}
 {% block content %}
 <div class="container mt-4">
-    <h2>Movies</h2>
+    <div class="mb-3">
+        <h2>Movies</h2>
+    </div>
 
-    {% for m in movies %}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4 class="card-title mb-0"><b>{{ m.title }}</b></h4>
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Movie recommondations based on your favorite genres:</h3>
+            {% if movies_genres == [] %}
+            <div class="alert alert-warning" role="alert">
+                Unfortunatly we found no movie recommondations based on your favorite genres!
             </div>
-            <div class="card-body">
-                <p>
-                    {% for g in m.genres %}
-                        <span class="badge badge-secondary">{{ g.genre }}</span>
-                    {% endfor %}
-                </p>
-                <p>
-                    {% for link in m.links %}
-                        IMDb: <a href="https://www.imdb.com/title/{{ link.imdb_id }}" target="_blank">{{ link.imdb_id }}</a><br>
-                        TMDb: <a href="https://www.themoviedb.org/movie/{{ link.tmdb_id }}" target="_blank">{{ link.tmdb_id }}</a>
-                    {% endfor %}
-                </p>
-                <p>
-                    {% for tag in m.tags %}
-                        <span class="badge badge-info">{{ tag.tag }}</span>
-                    {% endfor %}
-                </p>
-            </div>
-            <div class="card-footer">
-                <div class="movie-rating">Rate:
-                    <a href="#" class="card-link" data-movieid={{m.id}}>1</a>
-                    <a href="#" class="card-link" data-movieid={{m.id}}>2</a>
-                    <a href="#" class="card-link" data-movieid={{m.id}}>3</a>
-                    <a href="#" class="card-link" data-movieid={{m.id}}>4</a>
-                    <a href="#" class="card-link" data-movieid={{m.id}}>5</a> Stars
-                </div>
-            </div>
+            {% else %}
+                {% for m in movies_genres %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="card-title mb-0"><b>{{ m.title }}</b></h4>
+                        </div>
+                        <div class="card-body">
+                            <p>
+                                {% for g in m.genres %}
+                                    <span class="badge badge-secondary">{{ g.genre }}</span>
+                                {% endfor %}
+                            </p>
+                            <p>
+                                {% for link in m.links %}
+                                    IMDb: <a href="https://www.imdb.com/title/{{ link.imdb_id }}" target="_blank">{{ link.imdb_id }}</a><br>
+                                    TMDb: <a href="https://www.themoviedb.org/movie/{{ link.tmdb_id }}" target="_blank">{{ link.tmdb_id }}</a>
+                                {% endfor %}
+                            </p>
+                            <p>
+                                {% for tag in m.tags %}
+                                    <span class="badge badge-info">{{ tag.tag }}</span>
+                                {% endfor %}
+                            </p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="movie-rating">Rate:
+                                <a href="#" class="card-link" data-movieid={{m.id}}>1</a>
+                                <a href="#" class="card-link" data-movieid={{m.id}}>2</a>
+                                <a href="#" class="card-link" data-movieid={{m.id}}>3</a>
+                                <a href="#" class="card-link" data-movieid={{m.id}}>4</a>
+                                <a href="#" class="card-link" data-movieid={{m.id}}>5</a> Stars
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
-    {% endfor %}
+
+        <div class="col-md-6">
+            <h5>Movie recommondations based on similar users:</h3>
+
+            {% if movies_users == [] %}
+                <div class="alert alert-warning" role="alert">
+                    Unfortunatly we found no movie recommondations based on similar users!
+                </div>
+            {% else %}
+                {% for m in movies_users %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="card-title mb-0"><b>{{ m.title }}</b></h4>
+                        </div>
+                        <div class="card-body">
+                            <p>
+                                {% for g in m.genres %}
+                                    <span class="badge badge-secondary">{{ g.genre }}</span>
+                                {% endfor %}
+                            </p>
+                            <p>
+                                {% for link in m.links %}
+                                    IMDb: <a href="https://www.imdb.com/title/{{ link.imdb_id }}" target="_blank">{{ link.imdb_id }}</a><br>
+                                    TMDb: <a href="https://www.themoviedb.org/movie/{{ link.tmdb_id }}" target="_blank">{{ link.tmdb_id }}</a>
+                                {% endfor %}
+                            </p>
+                            <p>
+                                {% for tag in m.tags %}
+                                    <span class="badge badge-info">{{ tag.tag }}</span>
+                                {% endfor %}
+                            </p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="movie-rating">Rate:
+                                <a href="#" class="card-link" data-movieid={{m.id}}>1</a>
+                                <a href="#" class="card-link" data-movieid={{m.id}}>2</a>
+                                <a href="#" class="card-link" data-movieid={{m.id}}>3</a>
+                                <a href="#" class="card-link" data-movieid={{m.id}}>4</a>
+                                <a href="#" class="card-link" data-movieid={{m.id}}>5</a> Stars
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
 
     <form action={{url_for("movies_page")}} method='GET'>
         <button type="submit" class="btn btn-primary">Submit</button>

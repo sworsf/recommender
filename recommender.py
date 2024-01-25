@@ -6,10 +6,10 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import warnings
+import traceback
 from sklearn.metrics import mean_squared_error
 from models import db, User, Movie, MovieGenre, MovieTag, MovieLink, Rating, GenreScore
 from read_data import check_and_read_data
-from pprint import pprint
 
 
 # Class-based application configuration
@@ -50,9 +50,18 @@ def initdb_command():
     global db
     global ratings_matrix
     """Creates the database tables."""
-    check_and_read_data(db)
+    # Record start time
+    start_time = time.time()
+
+    check_and_read_data(db, fewer_ratings=False)
     print('Initialized the database.')
     print(f"Saved {User.query.count()} users from ratings")
+    # Record end time
+    end_time = time.time()
+    # Calculate execution time
+    execution_time = end_time - start_time
+    print(f"Execution Time for initializing the database: {execution_time} seconds")
+
 
 # The Home page is accessible to anyone
 @app.route('/')
@@ -94,25 +103,30 @@ def movies_page():
 
     print("Movies rated by current user: \n", c_user_rated_movies.all())
 
-    movie_selection = []
+    #############################################################
+    # get movies based on genre preferences (may take 20-30sec) #
+    #############################################################
+    movies_genres = []
 
-    # get movies based on genre preferences (may take 20-30sec)
-    if c_user_rated_movies.count() < 10:
+    # get the genre scores of user, sort them by score and get three favorite genres
+    best_genres = GenreScore.query.filter_by(user_id=current_user.id).order_by(GenreScore.score.desc()).limit(3).all()
+    print(
+        f"The 3 favorite genres of the current user are {best_genres[0].genre}, {best_genres[1].genre}, and {best_genres[2].genre}")
 
-        # get the genre scores of user, sort them by score and get three favorite genres
-        best_genres = GenreScore.query.filter_by(user_id=current_user.id).order_by(GenreScore.score).limit(3).all()
-        print(
-            f"The 3 favorite genres of the current user are {best_genres[0].genre}, {best_genres[1].genre}, and {best_genres[2].genre}")
+    # filter unrated movies by 3 favorite genres
+    movies1 = c_user_unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[0].genre))
+    movies2 = c_user_unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[1].genre))
+    movies3 = c_user_unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[2].genre))
+    movies_genres.extend(movies1.union(movies2).union(movies3).limit(10).all())
+    print("Movies selected based on those genres: \n", movies_genres)
 
-        # filter unrated movies by 3 favorite genres
-        movies1 = c_user_unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[0].genre))
-        movies2 = c_user_unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[1].genre))
-        movies3 = c_user_unrated_movies.filter(Movie.genres.any(MovieGenre.genre == best_genres[2].genre))
-        movie_selection.extend(movies1.union(movies2).union(movies3).limit(10).all())
-        print("Movies selected based on those genres: \n", movie_selection)
 
-    # get genres based on similar user preferences
-    else:
+    ################################################
+    # get movies based on similar user preferences #
+    ################################################
+    movies_users = []
+
+    if c_user_rated_movies.count() >= 5:
 
         # make a matrix with all the ratings (user id as row_index, movie_id as column index)
         warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
@@ -136,11 +150,10 @@ def movies_page():
                 if any(mask):
                     mse = mean_squared_error([current_user_ratings], [other_user_ratings])
                     distances[str(index)] = mse
-        print("Distances calculated between current user and other users: \n", distances)
 
         # sort the distances from lowest to highest (https://www.geeksforgeeks.org/python-sort-python-dictionaries-by-key-or-value/)
-        # and also remove any users with a too large distance
-        MAX_DISTANCE = 10  # unrealistic number, just for testing!!!
+        # and also remove any users with a too large distance (similarity threshold)
+        MAX_DISTANCE = 9  # unrealistic number, just for testing!!! Better would be something like 3 or 5
         keys = list(distances.keys())
         values = list(distances.values())
         high_dist = [int(rating) <= MAX_DISTANCE for rating in values]
@@ -148,29 +161,31 @@ def movies_page():
         sorted_value_index = np.argsort(values)
         sorted_distances = {keys[i]: values[i] for i in sorted_value_index}
 
-        # collect movies liked by similar users
+        print("Distances calculated between current user and other users (sorted): \n", sorted_distances)
+
+        # collect movies liked by similar users (sorted by similarity)
         for (user_id, distance) in sorted_distances.items():
             # get movies rated by this user at least with 4 but not rated by current user
             user_ratings = Rating.query.filter_by(user_id=user_id).filter(Rating.rating >= 4).subquery()
             user_rated_movies = Movie.query.join(user_ratings, Movie.id == user_ratings.c.movie_id)
-            movie_selection.extend(user_rated_movies.except_(c_user_rated_movies).all())
+            movies_users.extend(user_rated_movies.except_(c_user_rated_movies).all())
             print(
-                f"Of {user_rated_movies.count()} movies rated by user{user_id}, {user_rated_movies.except_(c_user_rated_movies).count()} have not been rated by the current user: ",
+                f"Of {user_rated_movies.count()} movies rated positively by user{user_id}, {user_rated_movies.except_(c_user_rated_movies).count()} have not been rated by the current user: ",
                 user_rated_movies.except_(c_user_rated_movies).all())
 
         # delete duplicates and limit recommendet movies list to 10 movies
-        movie_selection = list(set(movie_selection))
-        if len(movie_selection) > 10:
-            movie_selection = movie_selection[0:10]
-        print("Movies selected based on similar users: \n", movie_selection)
+        movies_users = list(set(movies_users))
+        if len(movies_users) > 10:
+            movies_users = movies_users[0:10]
+        print("Movies selected based on similar users: \n", movies_users)
 
     # Record end time
     end_time = time.time()
     # Calculate execution time
     execution_time = end_time - start_time
-    print(f"Execution Time: {execution_time} seconds")
+    print(f"Execution Time for getting recommondations: {execution_time} seconds")
 
-    return render_template("movies.html", movies=movie_selection)
+    return render_template("movies.html", movies_genres=movies_genres, movies_users=movies_users)
 
 
 @app.route('/rate', methods=['POST'])
@@ -266,3 +281,7 @@ def profile_page():
 # Start development web server
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
+
+@app.errorhandler(500)
+def internal_error(exception):
+   return "<pre>"+traceback.format_exc()+"</pre>"
